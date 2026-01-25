@@ -47,6 +47,15 @@ load("lanz-and-cox.RData")
 
 ```
 
+```{r}
+
+bcsi <- wt_download_report(4021, 'ARU', c('main','ai','recording'))
+
+bcsi_main <- bcsi[[2]] |>
+  mutate(year = year(recording_date_time))
+
+```
+
 ::: {.callout-note collapse="true" style="background-color: #f4f4f4; padding: 20px;"}
 This report is dynamically generated, meaning its results may evolve with the addition of new data or further analyses. For the most recent updates, refer to the publication date and feel free to reach out to the authors.
 :::
@@ -55,9 +64,15 @@ This report is dynamically generated, meaning its results may evolve with the ad
 
 # Land Acknowledgement
 
+
+
 # Introduction
 
+
+
 # Methods
+
+
 
 ## Data collection
 
@@ -87,6 +102,140 @@ leaflet() %>%
 
 
 ```
+
+```{r}
+
+seabirds <- c(
+  "Tufted Puffin",
+  "Common Murre",
+  "Cassin's Auklet",
+  "Rhinoceros Auklet",
+  "Short-tailed Albatross",
+  "Black-footed Albatross",
+  "Pink-footed Shearwater",
+  "Marbled Murrelet",
+  "Ancient Murrelet"
+)
+
+wt_get_species() |>
+  filter(species_common_name %in% seabirds)
+
+wt_get_project_species(4069) |>
+  filter(species_common_name %in% seabirds)
+
+```
+
+```{r}
+bcsi_recs <- wt_get_sync("organization_recordings", organization = 5853)
+
+bcsi_recs |>
+  mutate(date = as.Date(recording_date_time)) |>
+  count(date) |>
+  ggplot(aes(x=date, y=n)) +
+  geom_bar(stat = "identity") +
+  labs(
+    x = "Date",
+    y = "Number of recordings",
+    title = "BCSI recording collection over time"
+  ) +
+  theme_minimal()
+
+```
+
+```{r}
+
+noise_level_map <- c(
+  "Low"     = 1,
+  "Medium"  = 2,
+  "High"    = 3,
+  "Extreme" = 4
+)
+
+noise_pattern_map <- c(
+  "Intermittent" = 2,
+  "Infrequently"   = 1,
+  "Frequent"     = 3,
+  "Constant"     = 4
+)
+
+bcsi_noise <- bcsi[[3]] |>
+  separate_rows(task_noise, sep = "\\+") |>
+  separate(
+    task_noise,
+    into = c("noise_source", "noise_level", "noise_pattern"),
+    sep = "/",
+    fill = "right"
+  ) |>
+  select(task_id, noise_source, noise_level, noise_pattern) |>
+  distinct() |>
+  filter(noise_source == "Ocean") |>
+  drop_na() |>
+  mutate(
+    noise_level_num   = unname(noise_level_map[noise_level]),
+    noise_pattern_num = unname(noise_pattern_map[noise_pattern])
+  ) 
+
+bcsi_main_noise <- bcsi_main |>
+  inner_join(bcsi_noise, by = "task_id")
+  
+bcsi_richness <- bcsi_main_noise %>%
+  group_by(recording_id, noise_level, noise_level_num, noise_pattern_num) %>%
+  summarise(
+    richness = n_distinct(species_code[!is.na(species_code)]),
+    .groups = "drop"
+  ) |>
+  mutate(noise_level = factor(
+  noise_level,
+  levels = c("Low", "Medium", "High", "Extreme"),
+  ordered = TRUE
+))
+
+ggplot(bcsi_richness, aes(factor(noise_level), richness)) +
+  geom_boxplot() +
+  labs(
+    x = "Noise level (ordinal)",
+    y = "Species richness per recording",
+    title = "Species richness vs noise level"
+  ) +
+  theme_minimal()
+
+bcsi_individuals <- bcsi_main_noise %>%
+  group_by(recording_id, noise_level, noise_level_num, noise_pattern_num, species_code) %>%
+  summarise(individuals = max(individual_order),
+    .groups = "drop"
+  ) |>
+  mutate(individuals = case_when(is.na(individuals) ~ 0, TRUE ~ individuals)) |>
+  group_by(recording_id, noise_level, noise_level_num, noise_pattern_num) |>
+  summarise(n = sum(individuals)) |>
+  ungroup() |>
+  mutate(
+    noise_level = factor(
+      noise_level,
+      levels = c("Low", "Medium", "High", "Extreme"),
+      ordered = TRUE
+    )
+  )
+
+ggplot(bcsi_individuals, aes(noise_level, n)) +
+  geom_boxplot() +
+  labs(
+    x = "Noise level",
+    y = "Individuals detected per recording",
+    title = "Individuals detected vs noise level"
+  ) +
+  theme_minimal()
+
+```
+
+```{r}
+
+bcsi_seabirds <- wt_download_report(4069, 'ARU', c('main','ai'))
+
+eval <- wt_evaluate_classifier(bcsi_seabirds, resolution = "recording", remove_species = TRUE, species = "MAMU")
+wt_additional_species(bcsi_seabirds, remove_species = TRUE, threshold = 0.8, resolution = "task", format_to_tags = TRUE) |> view()
+```
+
+
 
 ## Results
 
