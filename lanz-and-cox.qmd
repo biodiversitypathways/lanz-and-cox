@@ -48,11 +48,18 @@ load("lanz-and-cox.RData")
 ```
 
 ```{r}
+#| include: false
+#| echo: false
+#| eval: false
+#| warning: false
+#| message: false
 
 bcsi <- wt_download_report(4021, 'ARU', c('main','ai','recording'))
 
 bcsi_main <- bcsi[[2]] |>
   mutate(year = year(recording_date_time))
+
+lac_locs <- wt_get_sync("organization_locations", organization = 5853)
 
 ```
 
@@ -62,17 +69,15 @@ This report is dynamically generated, meaning its results may evolve with the ad
 
 # Abstract
 
+Passive acoustic monitoring was conducted on Lanz and Cox Islands to characterize seabird and songbird communities across multiple breeding seasons prior to invasive mink and raccoon eradication. Autonomous Recording Units (ARUs; SM4) were deployed at `r length(unique(bcsi$location))` locations and analyzed using a combination of machine-learning algorithms and expert validation. This report summarizes species presence, temporal patterns of detection, and relative abundance for seabirds and songbirds, and provides spatial representations of detections across both islands. These results establish a pre-eradication baseline to support evaluation of seabird prospecting activity and future changes in songbird communities following invasive predator removal.
+
 # Land Acknowledgement
-
-
 
 # Introduction
 
-
+Lanz and Cox Islands support important seabird and songbird habitats, yet populations have been negatively affected by the presence of invasive predators, including mink and raccoon. As part of a broader restoration initiative, passive acoustic monitoring was implemented to document avian community composition prior to eradication activities. Autonomous recording units (ARUs) were deployed across both islands over three breeding seasons to capture vocal activity of seabirds and songbirds. Acoustic data were processed using the WildTrax data management platform in combination with BirdNET and HawkEars machine-learning algorithms, with detections verified using expert review informed by prior experience in marine acoustic environments. This report presents the results of these analyses, including species detected, timing of detections, relative abundance metrics, and spatial patterns of occurrence. Together, these data provide a baseline against which post-eradication monitoring can be compared to assess project outcomes and ecological recovery.
 
 # Methods
-
-
 
 ## Data collection
 
@@ -86,8 +91,6 @@ This report is dynamically generated, meaning its results may evolve with the ad
 #| fig-cap: Locations from Lanz and Cox Provincial Park ARU Monitoring Program
 #| label: fig-aru-monitoring-locations
 
-lac_locs <- wt_get_sync("organization_locations", organization = 5853)
-
 leaflet() %>%
   addTiles() %>%
   addCircleMarkers(
@@ -100,10 +103,14 @@ leaflet() %>%
   addMeasure(primaryLengthUnit = "meters", primaryAreaUnit = "sqmeters") %>%
   addMiniMap(position = "bottomleft")
 
-
 ```
 
 ```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+#| include: true
 
 seabirds <- c(
   "Tufted Puffin",
@@ -235,7 +242,9 @@ eval <- wt_evaluate_classifier(bcsi_seabirds, resolution = "recording", remove_s
 wt_additional_species(bcsi_seabirds, remove_species = TRUE, threshold = 0.8, resolution = "task", format_to_tags = TRUE) |> view()
 ```
 
+## Data management, processing and quality control
 
+Recordings were clipped and organized to only include the 10-minute count. Before adopting WildTrax in 2021, processing analysts excluded the initial 20 seconds to 1.5 minutes of recordings to reduce human impact on detection probability, then logged the first detection time per species. Recordings are now uploaded as clean 10-minute files with the voice note and observer notes removed. In WildTrax, individuals were counted by users scanning both the spectrogram and listening to the audio output. Tags were then drawn to encompass the signal within the methods indicated in each project (see @tbl-transcriptions and @fig-acousticprocessing). Transcribers also had site photos available (see @fig-visitphotos) to optimize their species identification by having habitat context while processing.
 
 ## Results
 
