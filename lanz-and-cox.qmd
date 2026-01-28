@@ -1,5 +1,5 @@
 ---
-title: "Report on the use of passive acoustic monitoring for songbirds and seabirds in Lanz and Cox Pronvical Park, British Columbia"
+title: "Report on the use of passive acoustic monitoring for songbirds and seabirds on Lanz and Cox Islands"
 format:
   html:
     grid:
@@ -107,10 +107,10 @@ leaflet() %>%
 
 ```{r}
 #| echo: false
-#| eval: true
+#| eval: false
 #| warning: false
 #| message: false
-#| include: true
+#| include: false
 
 seabirds <- c(
   "Tufted Puffin",
@@ -130,10 +130,16 @@ wt_get_species() |>
 wt_get_project_species(4069) |>
   filter(species_common_name %in% seabirds)
 
+bcsi_recs <- wt_get_sync("organization_recordings", organization = 5853)
+
 ```
 
 ```{r}
-bcsi_recs <- wt_get_sync("organization_recordings", organization = 5853)
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+#| include: false
 
 bcsi_recs |>
   mutate(date = as.Date(recording_date_time)) |>
@@ -150,6 +156,11 @@ bcsi_recs |>
 ```
 
 ```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+#| include: true
 
 noise_level_map <- c(
   "Low"     = 1,
@@ -197,15 +208,6 @@ bcsi_richness <- bcsi_main_noise %>%
   ordered = TRUE
 ))
 
-ggplot(bcsi_richness, aes(factor(noise_level), richness)) +
-  geom_boxplot() +
-  labs(
-    x = "Noise level (ordinal)",
-    y = "Species richness per recording",
-    title = "Species richness vs noise level"
-  ) +
-  theme_minimal()
-
 bcsi_individuals <- bcsi_main_noise %>%
   group_by(recording_id, noise_level, noise_level_num, noise_pattern_num, species_code) %>%
   summarise(individuals = max(individual_order),
@@ -223,6 +225,24 @@ bcsi_individuals <- bcsi_main_noise %>%
     )
   )
 
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+#| include: true
+
+ggplot(bcsi_richness, aes(factor(noise_level), richness)) +
+  geom_boxplot() +
+  labs(
+    x = "Noise level (ordinal)",
+    y = "Species richness per recording",
+    title = "Species richness vs noise level"
+  ) +
+  theme_minimal()
+
 ggplot(bcsi_individuals, aes(noise_level, n)) +
   geom_boxplot() +
   labs(
@@ -235,16 +255,31 @@ ggplot(bcsi_individuals, aes(noise_level, n)) +
 ```
 
 ```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+#| include: true
 
 bcsi_seabirds <- wt_download_report(4069, 'ARU', c('main','ai'))
 
 eval <- wt_evaluate_classifier(bcsi_seabirds, resolution = "recording", remove_species = TRUE, species = "MAMU")
-wt_additional_species(bcsi_seabirds, remove_species = TRUE, threshold = 0.8, resolution = "task", format_to_tags = TRUE) |> view()
+wt_additional_species(bcsi_seabirds, remove_species = TRUE, threshold = 0.8, resolution = "task")
 ```
 
 ## Data management, processing and quality control
 
-Recordings were clipped and organized to only include the 10-minute count. Before adopting WildTrax in 2021, processing analysts excluded the initial 20 seconds to 1.5 minutes of recordings to reduce human impact on detection probability, then logged the first detection time per species. Recordings are now uploaded as clean 10-minute files with the voice note and observer notes removed. In WildTrax, individuals were counted by users scanning both the spectrogram and listening to the audio output. Tags were then drawn to encompass the signal within the methods indicated in each project (see @tbl-transcriptions and @fig-acousticprocessing). Transcribers also had site photos available (see @fig-visitphotos) to optimize their species identification by having habitat context while processing.
+All recordings were uploaded to WildTrax in order for the data to be accessible and stored. 
+
+### Community data processing
+
+For each sampling location and year, a total of nine autonomous recording unit (ARU) recordings, each 3 minutes in duration, were analyzed to characterize the songbird community. All vocalizing species were identified, and the abundance of each species was estimated using a count-removal framework based on time-to-first-detection, which helps reduce positive bias associated with repeated detections of the same individual within a recording. Recordings were intentionally distributed across diel periods to capture variation in vocal activity. Five recordings were selected during the dawn period (04:00–07:59), when songbird detectability is typically highest. Two recordings were selected during dusk (19:00–22:59), and two during the night (23:00–03:59), allowing for detection of crepuscular or nocturnally active species and providing a more complete representation of the avian community. This standardized temporal sampling design ensured consistent effort across locations and years while maximizing detectability across species with differing activity patterns.
+
+### Evaluating performance of HawkEars on Common Murre and Marbled Murrelet
+
+
+
+### Creating annotation datasets and new classifier implementation
 
 ## Results
 
