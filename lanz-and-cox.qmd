@@ -29,6 +29,8 @@ author:
     affiliation: "BC Ministry of Environment and Parks"
   - name: "Iain Reid"
     affiliation: "BC Ministry of Environment and Parks"
+  - name: "Christine Rock"
+    affiliation: "Environment and Climate Change Canada"
 editor: visual
 bibliography: references.bib
 nocite: '@*'
@@ -66,7 +68,7 @@ library(gstat)
 library(ggrepel)
 library(terra)
 
-#wildrtrax::wt_auth()
+wildrtrax::wt_auth()
 
 load("lanz-and-cox.RData")
 #save.image("lanz-and-cox.RData")
@@ -109,13 +111,17 @@ This project was funded in part by the BC License Plate program.
 
 # Introduction
 
-Lanz and Cox Islands are part of the Scott Islands Provincial Park and the Scott Islands Marine National Wildlife Area, the largest national wildlife area in Canada. The area protects important seabird and songbird habitats, yet populations have been negatively affected by the presence of invasive predators. As part of a broader initiative, passive acoustic monitoring was implemented to document avian community composition. This report presents the results of these analyses, including species detected, timing of detections, relative abundance metrics, and baseline spatial patterns of occurrence.
+The provincial park, Lanz and Cox Islands, are part of the Scott Islands archipelago. The marine area surrounding the islands are within Scott Islands marine National Wildlife Area, Canada's first marine National Wildlife Area. The area protects important wildlife habitat, yet bird populations have been negatively affected by the introduced invasive predators that were released onto Lanz and Cox Islands in the 1930's by fur trappers. As part of a broader initiative, passive acoustic monitoring was implemented to document avian community composition. This report presents the results of these analyses, including species detected, timing of detections, relative abundance metrics, and baseline spatial patterns of occurrence.
 
 # Methods
 
 ## Data collection
 
-Autonomous recording units (ARUs; @aru-overview) were deployed in three stages between 2024 and 2025 across Lanz and Cox Islands (@fig-aru-monitoring-locations), with the final data retrievals taking place in March 2026. Sites were accessed via helicopter. Recordings were collected on a schedule of recording for five minutes every 15 minutes at 44100 Hz. A total of `r nrow(bcsi_recs) |> prettyNum(big.mark = ",")` recordings were collected totalling `r bcsi_recs |> summarise(sum = round(sum(recording_duration) / 3600)) |> pull(sum) |> prettyNum(big.mark = ",")` audio hours of data (@fig-bcsi-recs).
+Autonomous recording units (ARUs; @aru-overview) were deployed in three stages between 2024 and 2025 across Lanz and Cox Islands (@fig-aru-monitoring-locations), with the final data retrieval included in this report taking place in March 2026. Sites were accessed via helicopter. Recordings were collected on a schedule of recording for five minutes every 15 minutes at 44100 Hz until batteries and/or memory cards were depleted or the units were checked and replenished. A total of `r nrow(bcsi_recs) |> prettyNum(big.mark = ",")` recordings were collected totalling `r bcsi_recs |> summarise(sum = round(sum(recording_duration) / 3600)) |> pull(sum) |> prettyNum(big.mark = ",")` audio hours of data (@fig-bcsi-recs).
+
+::: {.callout-note}
+Several ARU locations were relocated slightly further from the shoreline during the deployment period. Additionally, a subset of units were inadequately secured in 2024, resulting in equipment loss to the ocean and corresponding gaps in the dataset. As a result, recording continuity varies across units, and unit positions are not fixed throughout the study period.
+:::
 
 ```{r}
 #| echo: false
@@ -124,7 +130,7 @@ Autonomous recording units (ARUs; @aru-overview) were deployed in three stages b
 #| message: false
 #| include: true
 #| fig-align: center
-#| fig-cap: Locations from Lanz and Cox Provincial Park ARU Monitoring Program
+#| fig-cap: Locations from Lanz and Cox Islands Park ARU Monitoring Program
 #| label: fig-aru-monitoring-locations
 
 m <- leaflet() %>%
@@ -156,7 +162,7 @@ if (knitr::is_html_output()) {
 #| message: false
 #| include: true
 #| label: tbl-loc-summary
-#| tbl-cap: Locations surveyed across years. Ones indicated a deployment in that year for that location
+#| tbl-cap: Locations surveyed across years on Lanz and Cox islands. The number 1 under columns 2024 and 2025 indicate a deployment in that year for that location. Note that locations with "L" in the label were on Lanz Island and locations with "C" in the label were on Cox Island.
 
 bcsi_locs <- bcsi_recs |>
   mutate(year = year(recording_date_time)) |>
@@ -222,31 +228,34 @@ bcsi_recs <- wt_get_sync("organization_recordings", organization = 5853)
 #| message: false
 #| include: true
 #| fig-align: center
-#| fig-cap: Cumulative daily recordings collected from Lanz and Cox Provincial Park ARU Monitoring Program
+#| fig-cap: Cumulative daily recordings collected from Lanz and Cox Islands Park ARU Monitoring Program
 #| label: fig-bcsi-recs
 
 bcsi_recs |>
   mutate(date = as.Date(recording_date_time)) |>
   count(date) |>
-  ggplot(aes(x=date, y=n)) +
+  ggplot(aes(x = date, y = n)) +
   geom_bar(stat = "identity") +
+  scale_x_date(
+    date_breaks = "2 months",
+    date_labels = "%b %Y"
+  ) +
   labs(
     x = "Date",
     y = "Number of recordings"
   ) +
   theme_minimal()
-
 ```
 
 ## Data management, processing and quality control
 
-Acoustic data were uploaded and processed using WildTrax (@macphail2026wildtrax). Location names, file metadata, and audio files were validated against deployment records to ensure recordings from each location were consistently named and correctly aggregated across all deployment phases.
+Acoustic data were uploaded and processed using WildTrax (@macphail2026wildtrax). Location names, file metadata, and audio files were validated against deployment records to ensure recordings from each location were consistently named and correctly aggregated across all deployment phases. The WildTrax project can be accessed [here](https://portal.wildtrax.ca/aru/4021).
 
 ## Community data processing
 
-For each sampling location and year, a total of nine recordings, each 3 minutes in duration, were analyzed to characterize the songbird community. All vocalizing species were identified, and the abundance of each species was estimated using a count-removal framework (@farnsworth2002removal) based on time-to-first-detection, which helps reduce positive bias associated with repeated detections of the same individual within a recording. Recordings were intentionally distributed across diel periods to capture variation in vocal activity. Five recordings were selected during the dawn period (04:00–07:59), when songbird detectability is typically highest. Two recordings were selected during dusk (19:00–22:59), and two during the night (23:00–03:59), allowing for detection of crepuscular or nocturnally active species and providing a more complete representation of the avian community. This standardized temporal sampling design ensured consistent effort across locations and years while maximizing detectability across species with differing activity patterns.
+For each sampling location and year, a total of nine randomly-chosen recordings in moderate survey conditions (wind <20 km/h, precipitation <1 mm / hr recorded at the closest weather station at Cape Scott), each 3 minutes in duration, were analyzed to characterize the songbird community. All vocalizing species were identified, and the abundance of each species was estimated using a count-removal framework (@farnsworth2002removal) based on time-to-first-detection, which helps reduce positive bias associated with repeated detections of the same individual within a recording. Recordings were intentionally distributed across diel periods to capture variation in vocal activity. Five recordings were selected during the dawn period (04:00–07:59), when songbird detectability is typically highest. Two recordings were selected during dusk (19:00–22:59), and two during the night (23:00–03:59), allowing for detection of crepuscular or nocturnally active species and providing a more complete representation of the avian community. This standardized temporal sampling design ensured consistent effort across locations and years while maximizing detectability across species with differing activity patterns.
 
-As coastal proximity may reduce species detection effectiveness, as wave action and wind-driven noise can mask vocalizations and shrink effective detection distances (@pijankowski2011landscape), we examined whether distance and cardinal to the nearest coastline predicted observed species richness across monitoring locations. We also compared geophonic acoustic indices (@towsey2017calculation) against WildTrax noise metrics to establish thresholds for task exclusion and to characterize background noise conditions at each site. We modeled maximum noise level as an ordinal response (Low \< Medium \< High \< Extreme) using a cumulative link model with distance to coast and coastline orientation (sine/cosine transformation) as predictors.
+Coastal proximity may reduce species detection effectiveness, as wave action and wind-driven noise can mask vocalizations and shrink effective detection distances (@pijankowski2011landscape). Therefore, we examined whether distance and cardinal direction to the nearest coastline predicted observed species richness across monitoring locations. We also compared geophonic acoustic indices (@towsey2017calculation) against WildTrax noise metrics to establish thresholds for recording processing and to characterize background noise conditions at each site. We modeled maximum noise level as an ordinal response (Low \< Medium \< High \< Extreme) using a cumulative link model with distance to coast and coastline orientation (sine/cosine transformation) as predictors.
 
 ## Use of automated classifiers on seabirds
 
@@ -271,7 +280,7 @@ eval <- wt_evaluate_classifier(bcsi_seabirds, resolution = "recording", remove_s
 # wt_additional_species(bcsi_seabirds, remove_species = TRUE, threshold = 0.8, resolution = "task")
 ```
 
-We first wanted to assess the accuracy of the current version of the HawkEars (v1.0.8) classifier for three focal species in the group for which the classifier already possesed species: Common Murre (*Uria aalge* ; COMU), Marbled Murrelet (*Brachyramphus marmoratus* ; MAMU), and Black Oystercatcher (*Haematopus bachmani* ; BLOY). We extracted all recordings from WildTrax in which the classifier detected these species, yielded mean score of 0.33 +/- 0.08. A human reviewer then verified each task, confirming detections as either true positives (TP) where the species was audible and confirmed, or false positives (FP) where the identification was incorrect. Using these verified results, we applied the `wt_evaluate_classifier()` and `wt_classifier_threshold()` functions from the `wildrtrax` R package (@macphail-wildrtrax) to calculate precision, recall, and *F*-score. This allowed us to identify the minimum confidence threshold at which classifier performance was deemed acceptable for each species, balancing the trade-off between retaining true detections and excluding false positives. Recordings scoring below this optimized threshold were excluded from subsequent analyses, while those meeting or exceeding it were accepted without further manual review. This approach is consistent with emerging best practices for deploying automated classifiers at scale, where full human review is impractical and a validated threshold provides a reproducible and defensible basis for data inclusion (@Knight02112019). Next, we expanded the evaluation of classifier performance using HawkEars 2.0 (hereafter HE2). This updated model, which is not currently implemented within WildTrax, incorporates an expanded seabird species set: Pink-footed Shearwater (*Puffinus creatopus* ; PFSH), Ancient Murrelet (*Synthliboramphus antiquus* ; ANMU), Tufted Puffin (*Fratercula cirrhata* ; TUPU) and Rhinoceros Auklet (*Cerorhinca monocerata* ; RHAU). We conducted a structured verification of outputs from HE2 by manually reviewing detections and identified any systematic misclassifications, in order to evaluate how the expanded species list influenced both true positive retention and false positive rates. 
+We first wanted to assess the accuracy of the current version of the HawkEars (v1.0.8) classifier for three focal marine species in the group for which the classifier already had species included: Common Murre (*Uria aalge*; COMU), Marbled Murrelet (*Brachyramphus marmoratus*; MAMU), and Black Oystercatcher (*Haematopus bachmani*; BLOY). We extracted all recordings from WildTrax in which the classifier detected these species, which yielded a mean score of 0.33 +/- 0.08. A human reviewer then verified each task, confirming detections as either true positives (TP) where the species was audible and confirmed, or false positives (FP) where the identification was incorrect. Using these verified results, we applied the `wt_evaluate_classifier()` and `wt_classifier_threshold()` functions from the `wildrtrax` R package (@macphail-wildrtrax) to calculate precision, recall, and *F*-score. This allowed us to identify the minimum confidence threshold at which classifier performance was deemed acceptable for each species, balancing the trade-off between retaining true detections and excluding false positives. Recordings scoring below this optimized threshold were excluded from subsequent analyses, while those meeting or exceeding it were accepted without further manual review. This approach is consistent with emerging best practices for deploying automated classifiers at scale, where full human review is impractical and a validated threshold provides a reproducible and defensible basis for data inclusion (@Knight02112019). Next, we expanded the evaluation of classifier performance using HawkEars 2.0 (hereafter HE2). This updated model, which is not currently implemented within WildTrax, incorporates an expanded seabird species set: Pink-footed Shearwater (*Puffinus creatopus* ; PFSH), Ancient Murrelet (*Synthliboramphus antiquus* ; ANMU), Tufted Puffin (*Fratercula cirrhata* ; TUPU) and Rhinoceros Auklet (*Cerorhinca monocerata* ; RHAU). We conducted a structured verification of outputs from HE2 by manually reviewing detections and identified any systematic misclassifications, in order to evaluate how the expanded species list influenced both true positive retention and false positive rates.
 
 ## Seabird relative abundance
 
@@ -281,7 +290,7 @@ Positive seabird detection locations from the classification step were spatially
 
 ## Songbird species richness and diversity
 
-A total of `r nrow(distinct_spp)` species were found with a summary of detections found at @tbl-spp-summary. @fig-spp-rich-locs describes the relationship of species richness for each location across the two years of surveys. Shannon's diversity was also calculated (see @fig-shannon). No significant differences in species richness or Shannon's diversity was obsvered between years despite differences in individual location metrics. This can be explained by the variability in detection of certain species and the availability of individual species for vocalization.
+A total of songbird `r nrow(distinct_spp)` species were found with a summary of detections found at @tbl-spp-summary. @fig-spp-rich-locs describes the relationship of species richness for each location across the two years of surveys. Shannon's diversity was also calculated (see @fig-shannon). No significant differences in species richness or Shannon's diversity were obsvered between years.
 
 ```{r}
 #| warning: false
@@ -443,13 +452,18 @@ bcsi_seasonal <- bcsi_main |>
 #| include: true
 #| results: hide
 #| fig-align: center
-#| fig-cap: Seasonal detection activity of most commonly detected (n > 3) forest species
+#| fig-cap: Seasonal detection activity of most commonly detected (n > 3) songbird species
 #| label: fig-spp-activity
 
 bcsi_seasonal |>
-  ggplot(aes(x = month, y = species_common_name)) + 
-  geom_density_ridges(alpha = 0.4, scale = 4) + 
+  left_join(wt_get_species() |> select(species_code, species_class, species_order), by = "species_code") |>
+  mutate(seabirds = case_when(species_order == "Charadriiformes" ~ "Seabird", TRUE ~ "Songbird")) |>
+  filter(!seabirds == "Seabird") |>
+  mutate(julian = yday(recording_date_time)) |>
+  ggplot(aes(x = julian, y = reorder(species_common_name, desc(species_common_name)))) + 
+  geom_density_ridges(alpha = 0.3, scale = 3, clip = "on") +
   scale_x_continuous(breaks = 1:12, labels = month.abb) +
+  scale_y_discrete(expand = expansion(mult = c(0.05, 0.15))) +
   theme_bw() +
   xlab("Month") + 
   ylab("Species")
@@ -458,9 +472,9 @@ bcsi_seasonal |>
 
 ## Noise effects
 
-Noisier recordings captured fewer birds (@fig-ind-noise). At Low and Medium noise levels, recorders typically detected around 5 individuals per recording, while High and Extreme noise levels roughly halved that, dropping to medians of approximately 3 and 2 individuals respectively. At the noisiest sites, many recordings picked up no birds at all. Occasional bursts of high detections (up to 20 individuals) did occur even under noisy conditions, but these were the notable exception. Not all sites experienced the same noise conditions (@fig-noise-loc). Most DC sites were consistently loud, with the majority reaching High noise levels and DC13 and DC15 hitting Extreme. DL sites were generally quieter, with most sitting around Medium noise, though DL02, DL11, DL12, and DL15 also reached High levels. DL06 stood out as the quietest location overall. Several sites also fluctuated across noise categories over the survey period, meaning detection conditions were not always consistent even within a single location. The systematically higher noise at DC sites likely explains some of the lower and more variable seabird detections recorded there compared to DL sites.
+Noisier recordings captured fewer birds (@fig-ind-noise). At Low and Medium noise levels, recorders typically detected around 5 individuals per recording, while High and Extreme noise levels roughly halved that, dropping to medians of approximately 3 and 2 individuals respectively. At the noisiest sites, many recordings picked up no birds at all. Occasional bursts of high detections (up to 20 individuals) did occur even under noisy conditions, but these were the notable exception. Not all sites experienced the same noise conditions (@fig-noise-loc). Most DC (Cox Island) sites were consistently loud, with the majority reaching High noise levels and DC13 and DC15 hitting Extreme. DL (Lanz Island) sites were generally quieter, with most sitting around Medium noise, though DL02, DL11, DL12, and DL15 also reached High levels. DL06 stood out as the quietest location overall. Several sites also fluctuated across noise categories over the survey period, meaning detection conditions were not always consistent even within a single location. The systematically higher noise at DC sites likely explains some of the lower and more variable seabird detections recorded there compared to DL sites.
 
-Island identity did not significantly improve model fit (ΔAIC = 0.07, p = 0.16), nor was there evidence for an interaction between island and distance (ΔAIC = 1.94, p = 0.79), indicating that the relationship between distance to coast and noise level was consistent across islands. Distance to coast showed a clear shift in the probability distribution across noise categories (@fig-noise-distance), with the probability of High noise declining substantially with increasing distance, from \~45% at 50 m to \~15–20% near 750 m. In contrast, the probability of Low noise increased steadily with distance, rising from \~5–10% near the coast to \~30% inland. Medium noise remained the most probable category across most distances, peaking around \~50–55% at intermediate distances (\~600–800 m), while Extreme noise was consistently rare and declined slightly with distance (\~10% to \<5%). Coast direction did not appear to play an important role (@fig-noise-direction).
+Island identity (Lanz vs. Cox Island) did not significantly improve model fit (ΔAIC = 0.07, p = 0.16), nor was there evidence for an interaction between island and distance from coast (ΔAIC = 1.94, p = 0.79), indicating that the relationship between distance to coast and noise level was consistent across islands. Distance to coast showed a clear shift in the probability distribution across noise categories (@fig-noise-distance), with the probability of High noise declining substantially with increasing distance, from \~45% at 50 m to \~15–20% near 750 m. In contrast, the probability of Low noise increased steadily with distance, rising from \~5–10% near the coast to \~30% inland. Medium noise remained the most probable category across most distances, peaking around \~50–55% at intermediate distances (\~600–800 m), while Extreme noise was consistently rare and declined slightly with distance (\~10% to \<5%). Coast direction did not appear to play an important role for either Lanz or Cox Islands (@fig-noise-direction).
 
 ```{r}
 #| echo: false
@@ -678,7 +692,7 @@ ggplot(pred_dist, aes(x = x, y = predicted,
 #| message: false
 #| include: true
 #| fig-align: center
-#| fig-cap: Noise per coast direction
+#| fig-cap: Noise per direction from ARU to coast
 #| label: fig-noise-direction
 
 ggplot(pred_dir,
@@ -708,7 +722,7 @@ Precision-recall curves were generated to evaluate classifier performance across
 #| message: false
 #| include: true
 #| fig-align: center
-#| fig-cap: HawkEars 1.0.8 performance evaluation
+#| fig-cap: HawkEars 1.0.8 performance evaluation against Birdnet v2.1.
 #| label: fig-he-perform
 
 #wt_classifier_threshold(eval)
@@ -724,9 +738,9 @@ ggplot(eval, aes(x=recall, y=precision, colour=classifier)) +
 
 ## HawkEars 2.0
 
-Initial runs of HE2 were conducted yielding `r nrow(bcsi_he2)` seabird detections in a total of `r nrow((bcsi_he2 |> select(location, recording_date_time) |> distinct()))` recordings or `r paste0(round(nrow(bcsi_he2) / nrow(bcsi_recs) * 100, 2), " %")` of the total audio dataset. The distribution of HE2 scores differs systematically between detections that were ultimately confirmed as true positives and those reassigned during verification, with true positives generally exhibiting higher score distributions across most species. The magnitude of separation between true and false positive outcomes varies among taxa, indicating that HE2 score provides a useful but species-dependent proxy for detection confidence rather than a universal decision boundary. For several species (notably BLOY, CAAU, COMU, and MAMU), true positives tend to cluster at higher HE2 values, while lower-scoring detections are more frequently associated with reassigned calls. This structure suggests that score-based stratification can be used to define species-specific confidence thresholds, where high-score detections can be retained with increasing certainty and lower-score detections represent a continuum of uncertainty rather than binary classification error. Species such as PFSH show comparatively tight separation between true and false positive score distributions, indicating that conservative thresholds can isolate a subset of high-confidence detections with minimal loss of signal. In contrast, species with greater overlap between outcome classes (notably ANMU and RHAU) exhibit weaker discriminative structure in HE2 space, implying that score alone is insufficient for full separation and that more conservative or multi-stage filtering strategies are required for reliable inference. Results can be found in @fig-he2-final and @tbl-fp-rates.
+Initial runs of HE2 were conducted yielding `r nrow(bcsi_he2)` seabird detections in a total of `r nrow((bcsi_he2 |> select(location, recording_date_time) |> distinct()))` recordings or `r paste0(round(nrow(bcsi_he2) / nrow(bcsi_recs) * 100, 2), " %")` of the total audio dataset. The distribution of HE2 scores differs systematically between detections that were ultimately confirmed as true positives and those reassigned during verification, with true positives generally exhibiting higher score distributions across most species. The magnitude of separation between true and false positive outcomes varies among taxa, indicating that HE2 score provides a useful but species-dependent proxy for detection confidence rather than a universal decision boundary. For several species (notably BLOY, CAAU, COMU, and MAMU), true positives tend to cluster at higher HE2 values, while lower-scoring detections are more frequently associated with reassigned calls. This structure suggests that score-based stratification can be used to define species-specific confidence thresholds, where high-score detections can be retained with increasing certainty and lower-score detections represent a continuum of uncertainty rather than binary classification error. Species such as PFSH show comparatively tight separation between true and false positive score distributions, indicating that conservative thresholds can isolate a subset of high-confidence detections with minimal loss of signal. In contrast, species with greater overlap between outcome classes (notably ANMU and RHAU) exhibit weaker discriminative structure in HE2 space, implying that score alone is insufficient for full separation and that more conservative or multi-stage filtering strategies are required for reliable inference for these species. Results can be found in @fig-he2-final and @tbl-fp-rates.
 
-Across target seabird taxa, performance varies substantially in the verified subset. TUPU had a relatively low number of detections (`r audit_table |> filter(source_species_code == "TUPU") |> pull(total_tags)` total tags), of which `r audit_table |> filter(source_species_code == "TUPU") |> pull(verified_tags)` were verified; most reviewed detections fell in lower HE2 regions consistent with reassignment, yielding a verified false positive rate of `r scales::percent(audit_table |> filter(source_species_code == "TUPU") |> pull(fp_rate_verified), accuracy = 1)`. RHAU showed similarly elevated misclassification within the verified subset, with `r audit_table |> filter(source_species_code == "RHAU") |> pull(verified_tags)` verified tags and a verified false positive rate of `r scales::percent(audit_table |> filter(source_species_code == "RHAU") |> pull(fp_rate_verified), accuracy = 1)`, consistent with broader overlap in HE2 distributions. ANMU exhibited near-complete collapse of separation within the reviewed subset, with `r audit_table |> filter(source_species_code == "ANMU") |> pull(verified_tags)` verified tags and a verified false positive rate of `r scales::percent(audit_table |> filter(source_species_code == "ANMU") |> pull(fp_rate_verified), accuracy = 1)`, with `r audit_table |> filter(source_species_code == "ANMU") |> pull(unverified_tags)` detections remaining unreviewed and concentrated in higher-score regions. MAMU and COMU remain the most uncertain due to large proportions of unverified detections, but both show strong skew in HE2 distributions toward higher-score detections among the reviewed subset. For MAMU, `r audit_table |> filter(source_species_code == "MAMU") |> pull(unverified_tags)` of `r audit_table |> filter(source_species_code == "MAMU") |> pull(total_tags)` tags remain unverified, and the reviewed subset shows a very high false positive rate (`r scales::percent(audit_table |> filter(source_species_code == "MAMU") |> pull(fp_rate_verified), accuracy = 1)`), indicating that low-to-intermediate HE2 values dominate incorrect assignments. COMU shows a similarly elevated verified false positive rate of `r scales::percent(audit_table |> filter(source_species_code == "COMU") |> pull(fp_rate_verified), accuracy = 1)`, with `r audit_table |> filter(source_species_code == "COMU") |> pull(unverified_tags)` unverified detections remaining, though higher HE2 values increasingly concentrate true detections. CAAU is represented by a substantial verified sample of `r audit_table |> filter(source_species_code == "CAAU") |> pull(verified_tags)` tags, with the majority of reviewed detections occurring in lower HE2 regions consistent with reassignment, resulting in a verified false positive rate of `r scales::percent(audit_table |> filter(source_species_code == "CAAU") |> pull(fp_rate_verified), accuracy = 1)`. A large number of detections (`r audit_table |> filter(source_species_code == "CAAU") |> pull(unverified_tags)`) remain unreviewed, but the observed HE2 structure suggests strong potential for threshold-based separation. PFSH shows comparatively strong concentration of true detections at higher HE2 values, with relatively low misclassification within the verified subset (`r audit_table |> filter(source_species_code == "PFSH") |> pull(verified_tags)` verified tags, `r scales::percent(audit_table |> filter(source_species_code == "PFSH") |> pull(fp_rate_verified), accuracy = 1)` false positive rate), suggesting that conservative HE2 thresholds may retain high-confidence detections effectively even as additional data are incorporated. BLOY shows intermediate performance, with partial but not complete separation in HE2 space. It has `r audit_table |> filter(source_species_code == "BLOY") |> pull(verified_tags)` verified tags and a verified false positive rate of `r scales::percent(audit_table |> filter(source_species_code == "BLOY") |> pull(fp_rate_verified), accuracy = 1)`, indicating that score-informed filtering would likely improve signal quality but should be applied in a species-specific manner rather than globally.
+Across target seabird taxa, performance varies substantially in the verified subset. TUPU had a relatively low number of detections (`r audit_table |> filter(source_species_code == "TUPU") |> pull(total_tags)` total tags), of which `r audit_table |> filter(source_species_code == "TUPU") |> pull(verified_tags)` were verified; most reviewed detections fell in lower HE2 regions consistent with reassignment, yielding a verified false positive rate of `r scales::percent(audit_table |> filter(source_species_code == "TUPU") |> pull(fp_rate_verified), accuracy = 1)`. RHAU showed similarly elevated misclassification within the verified subset, with `r audit_table |> filter(source_species_code == "RHAU") |> pull(verified_tags)` verified tags and a verified false positive rate of `r scales::percent(audit_table |> filter(source_species_code == "RHAU") |> pull(fp_rate_verified), accuracy = 1)`, consistent with broader overlap in HE2 distributions. ANMU exhibited near-complete collapse of separation within the reviewed subset, with `r audit_table |> filter(source_species_code == "ANMU") |> pull(verified_tags)` verified tags and a verified false positive rate of `r scales::percent(audit_table |> filter(source_species_code == "ANMU") |> pull(fp_rate_verified), accuracy = 1)`, with `r audit_table |> filter(source_species_code == "ANMU") |> pull(unverified_tags)` detections remaining unreviewed and concentrated in higher-score regions. MAMU and COMU remain the most uncertain due to large proportions of unverified detections, but both show strong skew in HE2 distributions toward higher-score detections among the reviewed subset. For MAMU, `r audit_table |> filter(source_species_code == "MAMU") |> pull(unverified_tags)` of `r audit_table |> filter(source_species_code == "MAMU") |> pull(total_tags)` tags remain unverified, and the reviewed subset shows a very high false positive rate (`r scales::percent(audit_table |> filter(source_species_code == "MAMU") |> pull(fp_rate_verified), accuracy = 1)`), indicating that low-to-intermediate HE2 values dominate incorrect assignments. COMU shows a similarly elevated verified false positive rate of `r scales::percent(audit_table |> filter(source_species_code == "COMU") |> pull(fp_rate_verified), accuracy = 1)`, with `r audit_table |> filter(source_species_code == "COMU") |> pull(unverified_tags)` unverified detections remaining, though higher HE2 values increasingly concentrate true detections. CAAU is represented by a substantial verified sample of `r audit_table |> filter(source_species_code == "CAAU") |> pull(verified_tags)` tags, with the majority of reviewed detections occurring in lower HE2 regions consistent with reassignment, resulting in a verified false positive rate of `r scales::percent(audit_table |> filter(source_species_code == "CAAU") |> pull(fp_rate_verified), accuracy = 1)`. Overall, a large number of detections (`r audit_table |> filter(source_species_code == "CAAU") |> pull(unverified_tags)`) remain unreviewed, but the observed HE2 structure suggests strong potential for threshold-based separation. PFSH shows comparatively strong concentration of true detections at higher HE2 values, with relatively low misclassification within the verified subset (`r audit_table |> filter(source_species_code == "PFSH") |> pull(verified_tags)` verified tags, `r scales::percent(audit_table |> filter(source_species_code == "PFSH") |> pull(fp_rate_verified), accuracy = 1)` false positive rate), suggesting that conservative HE2 thresholds may retain high-confidence detections effectively even as additional data are incorporated. BLOY shows intermediate performance, with partial but not complete separation in HE2 space. It has `r audit_table |> filter(source_species_code == "BLOY") |> pull(verified_tags)` verified tags and a verified false positive rate of `r scales::percent(audit_table |> filter(source_species_code == "BLOY") |> pull(fp_rate_verified), accuracy = 1)`, indicating that score-informed filtering would likely improve signal quality but should be applied in a species-specific manner rather than globally.
 
 ```{r}
 #| echo: false
@@ -886,7 +900,6 @@ ggplot(
 
 ```
 
-
 ```{r}
 #| warning: false
 #| echo: false
@@ -897,6 +910,8 @@ ggplot(
 #| tbl-cap: Rates of verification and classification for seabirds
 
 audit_table |>
+  left_join(wt_get_species() |> select(species_code, species_order), by = c("source_species_code" = "species_code")) |>
+  filter(species_order == "Charadriiformes") |>
   group_by(source_species_code, source_species_common_name) %>%
   summarise(
     total_tags      = sum(total_tags, na.rm = TRUE),
@@ -916,7 +931,7 @@ audit_table |>
 
 ## Seabird relative abundance and activity
 
-Spatial patterns of seabird relative abundance across the Scott Islands are shown in @fig-heatmap-seabirds. Detection intensity exhibited strong spatial clustering, with activity concentrated predominantly in the northwestern portion of Lanz Island. Two distinct hotspots were identified in the northwest and west-central areas of Lanz Island, with intensity declining steeply eastward across the island. Cox Island displayed comparatively lower and more spatially uniform detection intensity overall, though notable areas of elevated abundance were observed in both the western and eastern portions of the island. Diel patterns of seabird detections can also be found in @fig-diel-day-seabird and @fig-season-seabird. Median julian date of detections was 210 (July 29th) and the most common hours of detections were between dusk hour and before sunrise.
+Spatial patterns of seabird relative abundance across the Scott Islands are shown in @fig-heatmap-seabirds. Only true positives were used in the detection inference. Detection intensity exhibited strong spatial clustering, with activity concentrated predominantly in the northwestern portion of Lanz Island. Two distinct hotspots were identified in the northwest and west-central areas of Lanz Island, with intensity declining steeply eastward across the island. Cox Island displayed comparatively lower and more spatially uniform detection intensity overall, though notable areas of elevated abundance were observed in both the western and eastern portions of the island. Diel patterns of seabird detections can also be found in @fig-diel-day-seabird and @fig-season-seabird. Median julian date of detections was 210 (July 29th) and the most common hours of detections were between dusk hour and before sunrise.
 
 ```{r}
 #| warning: false
@@ -1018,7 +1033,7 @@ seabird_diel <- bcsi_he2_all |>
 #| eval: true
 #| message: false
 #| include: true
-#| fig-cap: Heatmap of seabird detections across Lanz and Cox Islands.
+#| fig-cap: Inverse distance weighted (IDW) interpolation of seabird detection activity across Lanz Island (DL sites) and Cox Island (DC sites), British Columbia. White points show ARU recording station locations; colour indicates the interpolated detection surface, with lighter (yellow) tones representing higher detection activity and darker (purple/black) tones representing lower activity.
 #| label: fig-heatmap-seabirds
 
 ggplot() +
@@ -1050,7 +1065,7 @@ ggplot() +
 #| include: true
 #| fig-height: 8
 #| fig-width: 8
-#| fig-cap: Kernel density estimate of seabird detectons by time of year (julian date). Rug plots indicate sample size of detections.
+#| fig-cap: Kernel density estimate of seabird detections on Lanz and Cox Islands by time of year (julian date). Rug plots indicate sample size of detections.
 #| label: fig-diel-day-seabird
 
 ggplot(seabird_diel, aes(x=julian)) +
@@ -1074,7 +1089,7 @@ ggplot(seabird_diel, aes(x=julian)) +
 #| include: true
 #| fig-height: 8
 #| fig-width: 8
-#| fig-cap: Kernel density estimates oF seabird detections by hour of the day (0h00 - 23h00). Rug plots indicate sample size of detections.
+#| fig-cap: Kernel density estimates of seabird detections by hour of the day (0h00 - 23h00). Rug plots indicate sample size of detections.
 #| label: fig-season-seabird
 
 ggplot(seabird_diel, aes(x=hour)) +
@@ -1090,11 +1105,11 @@ ggplot(seabird_diel, aes(x=hour)) +
 
 ## Acoustic classifier performance and seabirds {#sec-disc-classifier}
 
-This program produced a data set of sufficient resolution to support long-term passive monitoring programs, offering a scalable and repeatable method for processing large volumes of acoustic data. Misclassification rates and false positives remain an inherent limitation of the use of multi-species automated classifiers, particularly in field conditions where behavioural overlap between sound categories is common. Seabirds frequently produce detectable acoustic signals across multiple behavioural states simultaneously, vocalization, preening, and on-water activity often co-occur, complicating clean categorical assignment (@cerqueira2025automated). This reflects the ecological reality of these field recordings rather than a failure of the classification approach, and should be accounted for when interpreting detection outputs. 
+This program produced a data set of sufficient resolution to support long-term passive monitoring programs, offering a scalable and repeatable method for processing large volumes of acoustic data. Misclassification rates and false positives remain an inherent limitation of the use of multi-species automated classifiers, particularly in field conditions where behavioural overlap between sound categories is common. Seabirds frequently produce detectable acoustic signals across multiple behavioural states simultaneously, vocalization, preening, and on-water activity often co-occur, complicating clean categorical assignment (@cerqueira2025automated). This reflects the ecological reality of these field recordings rather than a failure of the classification approach, and should be accounted for when interpreting detection outputs.
 
-For future long-term deployments, a sampling rate of 22 kHz is likely sufficient given that the dominant frequencies of seabird vocalizations typically fall below 10 kHz, which would reduce storage requirements and extend battery life without meaningful loss of biological signal (@podolskiy2024acoustic). It's worth noting that these classifiers were trained and tested on datasets that included seabirds, but a more reliable assessment of their performance would involve testing them at sites where the species is actually known to be present and successfully breeding.
+For future long-term deployments, a sampling rate of 22 kHz is likely sufficient given that the dominant frequencies of seabird vocalizations typically fall below 10 kHz, which would reduce storage requirements and extend battery life without meaningful loss of biological signal (@podolskiy2024acoustic). A 32 kHz minimum frequency is recommended should songbirds would also like to be simultaneously monitored. It's worth noting that these classifiers were trained and tested on datasets that included seabirds, but a more reliable assessment of their performance would involve testing them at sites where the species is actually known to be present and successfully breeding.
 
-Overall, these patterns support the use of HE2 score as a probabilistic confidence metric that enables species-specific thresholding. In this framework, detections can be stratified by score into high-confidence subsets suitable for direct ecological inference, while intermediate-score detections represent the primary domain for uncertainty resolution. This directly supports downstream construction of relative abundance surfaces by allowing spatial signal extraction from high-confidence detections while maintaining consistent and transparent filtering criteria across taxa.
+Overall, these patterns support the use of HE2 score as a probabilistic confidence metric that enables species-specific thresholding. In this framework, detections can be stratified by score into high-confidence subsets suitable for direct ecological inference, while intermediate-score detections represent the primary domain for uncertainty resolution. This helps build maps of species relative abundance later on. It works by pulling out spatial patterns only from the most reliable detections, while keeping the same clear filtering rules for every species.
 
 ## Coastal monitoring
 
@@ -1102,4 +1117,4 @@ Passive acoustic monitoring in high-geophonic-noise environments presents a sign
 
 ## Seabird abundance measurements
 
-This study does not attempt to derive absolute abundance or population size estimates for Lanz and Cox Islands; however, the dataset provides a foundation for such analyses in future work. Presence–absence detections can be used as a basis for occupancy modelling or relative abundance indices, particularly when combined with spatially replicated recorder deployments. Notably, the majority of detections consisted of single-individual vocalizations (n = 1 per detection event), suggesting that call rate may serve as a proxy for local activity levels rather than group size. The strait between the two islands also appeared to represent a zone of relatively elevated acoustic activity, potentially reflecting inter-island movement or shared foraging habitat. Mapping the spatial distribution of detections across sites would allow identification of acoustic hotspots, which could inform targeted survey efforts. Interpreting these patterns is further complicated by uncertainty around the nature of seabird activity on these islands. The seasonal distribution of detections does not align with known breeding periods for the target species, suggesting that the acoustic activity captured in this dataset may primarily reflect foraging, feeding, and prospecting behaviour rather than breeding activity, as discussed in @sec-disc-classifier. This distinction has direct implications for abundance estimation, as call rates associated with transient or prospecting individuals may not reliably index local population size. Integrating detection data with diel activity patterns (@podolskiy2024acoustic) may help clarify whether observed variation in call rates reflects changes in abundance, behaviour, or both, and should be a focus of future validation work.
+This study does not attempt to derive absolute abundance or population size estimates for Lanz and Cox Islands; however, the dataset provides a foundation for such analyses in future work. Presence–absence detections can be used as a basis for occupancy modelling or relative abundance indices, particularly when combined with spatially replicated recorder deployments. Notably, the majority of detections consisted of single-individual vocalizations (n = 1 per detection event), suggesting that call rate may serve as a proxy for local activity levels rather than group size. The strait between the two islands also appeared to represent a zone of relatively elevated acoustic activity, potentially reflecting inter-island movement or shared foraging habitat. Continuing to update and enhance mapping the spatial distribution of detections across sites would allow identification of acoustic hotspots, which could inform targeted survey efforts. Interpreting these patterns is further complicated by uncertainty around the nature of seabird activity on these islands. The seasonal distribution of detections does not align with known breeding periods for the target species, suggesting that the acoustic activity captured in this dataset may primarily reflect foraging, feeding, and prospecting behaviour rather than breeding activity, as discussed in @sec-disc-classifier. This distinction has direct implications for abundance estimation, as call rates associated with transient or prospecting individuals may not reliably index local population size. Integrating detection data with diel activity patterns (@podolskiy2024acoustic) may help clarify whether observed variation in call rates reflects changes in abundance, behaviour, or both, and should be a focus of future validation work.
