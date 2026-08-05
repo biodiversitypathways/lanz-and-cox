@@ -17,7 +17,7 @@ format:
     number-sections: true
 navbar: right
 theme: cosmo
-date: "`r format(Sys.time(), '%d %B, %Y')`"
+date: "2026-07-31"
 author: 
   - name: "Alex MacPhail"
     affiliation: "Biodiversity Pathways Ltd."
@@ -117,9 +117,9 @@ The provincial park, Lanz and Cox Islands, are part of the Scott Islands archipe
 
 ## Data collection
 
-Autonomous recording units (ARUs; @aru-overview) were deployed in three stages between 2024 and 2025 across Lanz and Cox Islands (@fig-aru-monitoring-locations), with the final data retrieval included in this report taking place in March 2026. Sites were accessed via helicopter. Recordings were collected on a schedule of recording for five minutes every 15 minutes at 44100 Hz until batteries and/or memory cards were depleted or the units were checked and replenished. A total of `r nrow(bcsi_recs) |> prettyNum(big.mark = ",")` recordings were collected totalling `r bcsi_recs |> summarise(sum = round(sum(recording_duration) / 3600)) |> pull(sum) |> prettyNum(big.mark = ",")` audio hours of data (@fig-bcsi-recs).
+Autonomous recording units (ARUs; @aru-overview) were deployed in three stages between 2024 and 2025 across Lanz and Cox Islands (@fig-aru-monitoring-locations), with the final data retrieval included in this report taking place in March 2026, with the project still ongoing. Sites were accessed via helicopter. Recordings were collected on a schedule of recording for five minutes every 15 minutes at 44100 Hz until batteries and/or memory cards were depleted or the units were checked and replenished. A total of `r nrow(bcsi_recs) |> prettyNum(big.mark = ",")` recordings were collected totalling `r bcsi_recs |> summarise(sum = round(sum(recording_duration) / 3600)) |> pull(sum) |> prettyNum(big.mark = ",")` audio hours of data (@fig-bcsi-recs).
 
-::: {.callout-note}
+::: callout-note
 Several ARU locations were relocated slightly further from the shoreline during the deployment period. Additionally, a subset of units were inadequately secured in 2024, resulting in equipment loss to the ocean and corresponding gaps in the dataset. As a result, recording continuity varies across units, and unit positions are not fixed throughout the study period.
 :::
 
@@ -249,11 +249,13 @@ bcsi_recs |>
 
 ## Data management, processing and quality control
 
-Acoustic data were uploaded and processed using WildTrax (@macphail2026wildtrax). Location names, file metadata, and audio files were validated against deployment records to ensure recordings from each location were consistently named and correctly aggregated across all deployment phases. The WildTrax project can be accessed [here](https://portal.wildtrax.ca/aru/4021).
+Acoustic data were uploaded and processed using WildTrax (@macphail2026wildtrax). Location names, file metadata, and audio files were validated against deployment records to ensure recordings from each location were consistently named and correctly aggregated across all deployment phases. The WildTrax projects can be accessed [here](https://portal.wildtrax.ca/aru/4021) for the songbird processing and [here](https://portal.wildtrax.ca/aru/4346) for seabird data processing.
 
 ## Community data processing
 
-For each sampling location and year, a total of nine randomly-chosen recordings in moderate survey conditions (wind <20 km/h, precipitation <1 mm / hr recorded at the closest weather station at Cape Scott), each 3 minutes in duration, were analyzed to characterize the songbird community. All vocalizing species were identified, and the abundance of each species was estimated using a count-removal framework (@farnsworth2002removal) based on time-to-first-detection, which helps reduce positive bias associated with repeated detections of the same individual within a recording. Recordings were intentionally distributed across diel periods to capture variation in vocal activity. Five recordings were selected during the dawn period (04:00–07:59), when songbird detectability is typically highest. Two recordings were selected during dusk (19:00–22:59), and two during the night (23:00–03:59), allowing for detection of crepuscular or nocturnally active species and providing a more complete representation of the avian community. This standardized temporal sampling design ensured consistent effort across locations and years while maximizing detectability across species with differing activity patterns.
+For each sampling location and year, a total of nine randomly-chosen recordings in moderate survey conditions (wind \<20 km/h, precipitation \<1 mm / hr recorded at the closest weather station at Cape Scott), each 3 minutes in duration, were analyzed to characterize the songbird community. All vocalizing species were identified, and the abundance of each species was estimated using a count-removal framework (@farnsworth2002removal) based on time-to-first-detection, which helps reduce positive bias associated with repeated detections of the same individual within a recording. Recordings were intentionally distributed across diel periods to capture variation in vocal activity. Five recordings were selected during the dawn period (04:00–07:59), when songbird detectability is typically highest. Two recordings were selected during dusk (19:00–22:59), and two during the night (23:00–03:59), allowing for detection of crepuscular or nocturnally active species and providing a more complete representation of the avian community. This standardized temporal sampling design ensured consistent effort across locations and years while maximizing detectability across species with differing activity patterns. Each individual was labeled with what is known as a tag in WildTrax, which is the box (@fig-tags) encompassing each acoustic signal in frequency (hertz; Hz) and time (seconds).
+
+![](assets/tags.png)
 
 Coastal proximity may reduce species detection effectiveness, as wave action and wind-driven noise can mask vocalizations and shrink effective detection distances (@pijankowski2011landscape). Therefore, we examined whether distance and cardinal direction to the nearest coastline predicted observed species richness across monitoring locations. We also compared geophonic acoustic indices (@towsey2017calculation) against WildTrax noise metrics to establish thresholds for recording processing and to characterize background noise conditions at each site. We modeled maximum noise level as an ordinal response (Low \< Medium \< High \< Extreme) using a cumulative link model with distance to coast and coastline orientation (sine/cosine transformation) as predictors.
 
@@ -1113,7 +1115,7 @@ Overall, these patterns support the use of HE2 score as a probabilistic confiden
 
 ## Coastal monitoring
 
-Passive acoustic monitoring in high-geophonic-noise environments presents a significant methodological challenge, as abiotic noise sources including wave action, wind, and hydrological activity, can mask biological signals across relevant frequency ranges. The present dataset indicates a gradient in background noise intensity from coastal to inland sites, with the most pronounced transition occurring between the High and Low noise categories. While geophonic noise levels did not directly predict seabird detection rates, their pervasive influence on signal-to-noise ratios warrants careful consideration in site selection and recorder placement. Monitoring stations situated in high-noise environments risk systematic underdetection of target species, potentially biasing occupancy and abundance estimates if not corrected for in subsequent analyses.
+Passive acoustic monitoring in high geophonic noise environments presents a significant methodological challenge, as abiotic noise sources including wave action, wind, and hydrological activity, can mask biological signals across relevant frequency ranges. The present dataset indicates a gradient in background noise intensity from coastal to inland sites, with the most pronounced transition occurring between the High and Low noise categories. While geophonic noise levels did not directly predict seabird detection rates, their pervasive influence on signal-to-noise ratios warrants careful consideration in site selection and recorder placement. Monitoring stations situated in high-noise environments risk systematic underdetection of target species, potentially biasing occupancy and abundance estimates if not corrected for in subsequent analyses. For the sake of this report, here we refer to noise as natural, environmental noise.
 
 ## Seabird abundance measurements
 
