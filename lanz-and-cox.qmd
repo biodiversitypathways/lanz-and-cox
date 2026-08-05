@@ -68,7 +68,8 @@ library(gstat)
 library(ggrepel)
 library(terra)
 
-wildrtrax::wt_auth()
+#wildrtrax::wt_auth()
+#spp_tbl <- wt_get_species() |> select(species_code, species_order)
 
 load("lanz-and-cox.RData")
 #save.image("lanz-and-cox.RData")
@@ -443,7 +444,11 @@ bcsi_seasonal <- bcsi_main |>
   group_by(species_code) |>
   add_tally() |>
   ungroup() |>
-  filter(!n<3)
+  filter(!n<3) |>
+  left_join(wt_get_species() |> select(species_code, species_class, species_order), by = "species_code") |>
+  mutate(seabirds = case_when(species_order == "Charadriiformes" ~ "Seabird", TRUE ~ "Songbird")) |>
+  filter(!seabirds == "Seabird") |>
+  mutate(julian = yday(recording_date_time))
 ```
 
 ```{r}
@@ -458,10 +463,6 @@ bcsi_seasonal <- bcsi_main |>
 #| label: fig-spp-activity
 
 bcsi_seasonal |>
-  left_join(wt_get_species() |> select(species_code, species_class, species_order), by = "species_code") |>
-  mutate(seabirds = case_when(species_order == "Charadriiformes" ~ "Seabird", TRUE ~ "Songbird")) |>
-  filter(!seabirds == "Seabird") |>
-  mutate(julian = yday(recording_date_time)) |>
   ggplot(aes(x = julian, y = reorder(species_common_name, desc(species_common_name)))) + 
   geom_density_ridges(alpha = 0.3, scale = 3, clip = "on") +
   scale_x_continuous(breaks = 1:12, labels = month.abb) +
@@ -909,11 +910,11 @@ ggplot(
 #| message: false
 #| include: true
 #| label: tbl-fp-rates
-#| tbl-cap: Rates of verification and classification for seabirds
+#| tbl-cap: Rates of verification and classification for seabirds under HawkEars v2.0
 
 audit_table |>
-  left_join(wt_get_species() |> select(species_code, species_order), by = c("source_species_code" = "species_code")) |>
-  filter(species_order == "Charadriiformes") |>
+  left_join(spp_tbl, by = c("source_species_code" = "species_code")) |>
+  filter(species_order == "Charadriiformes", !(source_species_code == "UNGU")) |>
   group_by(source_species_code, source_species_common_name) %>%
   summarise(
     total_tags      = sum(total_tags, na.rm = TRUE),
