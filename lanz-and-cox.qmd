@@ -17,7 +17,7 @@ format:
     number-sections: true
 navbar: right
 theme: cosmo
-date: "2026-07-31"
+date: "2026-08-17"
 author: 
   - name: "Alex MacPhail"
     affiliation: "Biodiversity Pathways Ltd."
